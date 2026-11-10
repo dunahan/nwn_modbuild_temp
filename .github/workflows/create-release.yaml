@@ -58,31 +58,36 @@ jobs:
       - name: Install nasher
         run: nimble install nasher -y
 
-      - name: Build module
-        run: nasher pack --default
-
-# TODO: Add hak/tlk creation
-#       - name: Build hak
-#        run: nasher pack --hak
-
-#      - name: Build tlk
-#        run: nasher pack --tlk
+      # creates the grouped entries, even if an error occurs
+      - name: Build module/hak/tlk
+        run: nasher pack zip
 
       - name: Get current date
         id: date
         run: echo "date=$(date +'%Y-%m-%d-%H-%M')" >> "$GITHUB_OUTPUT"
 
-# TODO: Add created hak/tlk to the zip
+      # list up all created files and pack them up
       - name: Zip module contents
         id: zip
         run: |
-          MODFILE=$(ls *.mod | head -n1)
-          if [ -z "$MODFILE" ]; then
+          shopt -s nullglob
+          MODFILES=(*.mod)
+          if [ ${#MODFILES[@]} -eq 0 ]; then
             echo "No .mod file found – did the build fail?"
             exit 1
           fi
+          MODFILE="${MODFILES[0]}"
           ZIPFILE="${MODFILE%.mod}.zip"
-          zip -j "$ZIPFILE" "$MODFILE"
+          
+          # Start with the base list using the .mod file
+          FILES=("$MODFILE")
+          
+          # Dynamically add existing .hak and .tlk files
+          for f in *.hak *.tlk; do
+            FILES+=("$f")
+          done
+          
+          zip -j "$ZIPFILE" "${FILES[@]}"
           echo "zipfile=$ZIPFILE" >> "$GITHUB_OUTPUT"
 
       - name: Create release
