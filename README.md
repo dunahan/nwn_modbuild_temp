@@ -4,7 +4,7 @@ Template repository for automatically building and publishing a
 Neverwinter Nights: Enhanced Edition module via GitHub Actions.
 
 On every push to `main` (or manually via `workflow_dispatch`), the module
-is packed from the source files in `src/` using
+is packed from the source files in `src/**/*` using
 [nasher](https://github.com/squattingmonk/nasher), zipped, and
 automatically published as a GitHub Release.
 
@@ -29,13 +29,13 @@ automatically published as a GitHub Release.
 2. Install Nim + nasher (including `neverwinter.nim`/`nwn_script_comp`
    as the compiler).
 3. `nasher pack --default` builds the `.mod` file.
-4. The `.mod` file is zipped.
+4. The `.mod`/`.hak`/`.tlk` file is zipped.
 5. The zip is published as a GitHub Release (tag = build timestamp).
 
 ## Folder structure
 
 ```
-src/          Module resources as JSON (nasher converts these to GFF/ERF)
+src/**/*      Module resources as JSON (nasher converts these to GFF/ERF)
 nasher.cfg    Package/build configuration
 ```
 

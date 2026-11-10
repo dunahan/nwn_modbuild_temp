@@ -21,10 +21,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      # nasher/nwnsc brauchen zum Kompilieren der Skripte einen Teil der
-      # offiziellen NWN-Serverdaten (nwscript.nss, Standard-Includes etc.).
-      # Gleiche offizielle Quelle, die auch das nasher4gh-Docker-Image nutzt:
-      # https://github.com/Ardesco/nasher4gh-images/blob/main/Dockerfile
+      # nasher requires a portion of the official NWN server data
+      # (nwscript.nss, standard includes, etc.) to compile the scripts.
       - name: Cache NWN server data
         id: cache-nwn
         uses: actions/cache@v5
@@ -40,21 +38,17 @@ jobs:
           unzip -q "nwnee-dedicated-${NWNSERVER_VERSION}.zip" -d "$NWN_ROOT"
           rm "nwnee-dedicated-${NWNSERVER_VERSION}.zip"
 
-      # nasher nutzt seit Version 1.0.0 standardmaessig neverwinter.nim's
-      # nwn_script_comp als Compiler statt des aelteren, separaten nwnsc -
-      # genau der Compiler, den du hier haben willst, da er mit EE aktiv
-      # weiterentwickelt wird. Ein separater Download ist nicht noetig:
-      # "nimble install nasher" baut neverwinter.nim (und damit
-      # nwn_script_comp) als Abhaengigkeit automatisch mit.
+      # "nimble install nasher" automatically builds neverwinter.nim (and thus
+      # nwn_script_comp) as a dependency.
       - name: Setup Nim
         uses: jiro4989/setup-nim-action@v2
         with:
           nim-version: stable
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Cache fuer ~/.nimble: nasher + neverwinter.nim werden aus dem
-      # Quellcode kompiliert, das kostet beim allerersten Lauf ein paar
-      # Minuten. Mit Cache-Treffer faellt das danach wieder weg.
+      # Cache for ~/.nimble: nasher + neverwinter.nim are compiled from
+      # source code, which takes a few minutes during the very first run.
+      # With a cache hit, this step is skipped thereafter.
       - name: Cache nimble packages
         uses: actions/cache@v5
         with:
@@ -67,16 +61,24 @@ jobs:
       - name: Build module
         run: nasher pack --default
 
+# TODO: Add hak/tlk creation
+#       - name: Build hak
+#        run: nasher pack --hak
+
+#      - name: Build tlk
+#        run: nasher pack --tlk
+
       - name: Get current date
         id: date
         run: echo "date=$(date +'%Y-%m-%d-%H-%M')" >> "$GITHUB_OUTPUT"
 
-      - name: Zip module
+# TODO: Add created hak/tlk to the zip
+      - name: Zip module contents
         id: zip
         run: |
           MODFILE=$(ls *.mod | head -n1)
           if [ -z "$MODFILE" ]; then
-            echo "Kein .mod-File gefunden - Build fehlgeschlagen?"
+            echo "No .mod file found – did the build fail?"
             exit 1
           fi
           ZIPFILE="${MODFILE%.mod}.zip"
